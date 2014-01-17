@@ -1,22 +1,25 @@
+// Libs
 var irc = require('irc');
+var fs = require('fs');
 
-var config = {
-	channels: [ '#dotabotti_testi' ],
-	server: 'irc.freenode.net',
-	nick: 'Meepo',
-	debug: true
-};
+// Configs
+var config = require('config.json');
 
+// Init bot
 var bot = new irc.Client(config.server, config.nick, {
 	channels: config.channels,
-	userName: 'meepo',
-	realName: 'Dotabotti'
+	userName: config.userName,
+	realName: config.realName,
+	debug: config.debug
 });
 
+// Add error listener
 bot.addListener('error', function(message) {
     console.log('error: ', message);
 });
 
+
+// Gamestate object
 gamestate = {
 	challenged : 0,
 	accepted : 1,
@@ -27,6 +30,7 @@ gamestate = {
 	ended : 6
 }
 
+// Gamemode object
 gamemode = {
 	draft : 0,
 	shuffle : 1
