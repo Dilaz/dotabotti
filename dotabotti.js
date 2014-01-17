@@ -8,7 +8,6 @@ var config = require('config.json');
 // Init bot
 var bot = new irc.Client(config.server, config.nick, {
 	channels: config.channels,
-	userName: config.userName,
 	realName: config.realName,
 	debug: config.debug
 });
