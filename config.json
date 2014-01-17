@@ -1,0 +1,6 @@
+{
+	"channels": [ "#dotabotti_testi" ],
+	"server": "irc.freenode.net",
+	"nick": "Meepo",
+	"debug": true
+}
