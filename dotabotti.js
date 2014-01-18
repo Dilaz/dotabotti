@@ -65,16 +65,27 @@ function sign(nick, callback)
 	}
 }
 
-function out(nick)
+function out(nick, callback)
 {
-	var index = signed.indexOf(nick);
-	if(game != null && index > -1 && nick != game.dire.captain && nick != game.radiant.captain)
+	if(game != null)
 	{
-		signed.splice(index, 1);
-		return true;
+		get_player(nick, false, function(player) {
+			var index = signed.indexOf(player);
+			if(index > -1 && player.nick != game.radiant.captain.nick && player.nick != game.dire.captain.nick)
+			{
+				signed.splice(index, 1);
+				callback(player);
+			}
+			else
+			{
+				callback(null);
+			}
+		});
 	}
-
-	return false;
+	else
+	{
+		callback(null);
+	}
 }
 
 function start(nick)
@@ -95,19 +106,20 @@ function start(nick)
 			gameid: '',
 			state: gamestate.signup,
 			mode: gamemode.shuffle,
-			winner: null
+			winner: null,
+			date: Date.now()
 		}
 
 		get_player(nick, true, function(player) { signed = [player] });
 
-		get_player('winkzi', true, function(player) { signed.push(player); });
-		get_player('shancial', true, function(player) { signed.push(player); });
-		get_player('agu', true, function(player) { signed.push(player); });
-		get_player('ra', true, function(player) { signed.push(player); });
-		get_player('cadiac', true, function(player) { signed.push(player); });
-		get_player('snowell', true, function(player) { signed.push(player); });
-		get_player('cawa', true, function(player) { signed.push(player); });
-		get_player('aira', true, function(player) { signed.push(player); });
+		get_player('cxvxvc', true, function(player) { signed.push(player); });
+		get_player('nvcb', true, function(player) { signed.push(player); });
+		get_player('2tsdsd', true, function(player) { signed.push(player); });
+		get_player('adsdssd', true, function(player) { signed.push(player); });
+		get_player('45h54546', true, function(player) { signed.push(player); });
+		get_player('betr', true, function(player) { signed.push(player); });
+		get_player('xctyae', true, function(player) { signed.push(player); });
+		get_player('sfkddidfi', true, function(player) { signed.push(player); });
 
 		return true;
 	}
@@ -115,7 +127,7 @@ function start(nick)
 	return false;
 }
 
-function challenge(nick)
+function challenge(nick, callback)
 {
 	if(game == null || game.state == gamestate.ended)
 	{
@@ -133,47 +145,80 @@ function challenge(nick)
 			gameid: '',
 			state: gamestate.challenged,
 			mode: gamemode.draft,
-			winner: null
+			winner: null,
+			date: Date.now()
 		}
 
-		get_player(nick, true, function(player) { game.radiant.captain = player });
-		signed = [nick];
-
-		return true;
+		get_player(nick, true, function(player) { 
+			game.radiant.captain = player;
+			signed = [player];
+			callback(player);
+		});
 	}
-
-	return false;
-}
-
-function accept(nick)
-{
-	if(game != null && game.state == gamestate.challenged && game.radiant.captain != nick)
+	else
 	{
-		get_player(nick, true, function(player) { game.dire.captain = player });
-		game.dire.players = [];
-		signed.push(nick);
-		game.state = gamestate.signup;
-
-		return true;
+		callback(null);
 	}
-
-	return false;
 }
 
-function cancel(nick)
+function accept(nick, callback)
 {
-	var index = signed.indexOf(nick);
-	if(game != null && index > -1)
+	if(game != null && game.state == gamestate.challenged)
 	{
-		game = null;
+		get_player(nick, true, function(player) { 
+			if(game.radiant.captain.nick != player.nick)
+			{
+				game.dire.captain = player; 
+				signed.push(player);
 
-		return true;
+				game.state = gamestate.signup;
+
+				get_player('cxvxvc', true, function(player) { signed.push(player); });
+				get_player('nvcb', true, function(player) { signed.push(player); });
+				get_player('2tsdsd', true, function(player) { signed.push(player); });
+				get_player('adsdssd', true, function(player) { signed.push(player); });
+				get_player('betr', true, function(player) { signed.push(player); });
+				get_player('xctyae', true, function(player) { signed.push(player); });
+				get_player('sfkddidfi', true, function(player) { signed.push(player); });
+
+				 callback(player);
+			}
+			else
+			{
+				callback(null);
+			}
+		});
 	}
-
-	return false;
+	else
+	{
+		callback(null);
+	}
 }
 
-function end(winner)
+function cancel(nick, callback)
+{
+	if(game != null)
+	{
+		get_player(nick, false, function(player) {
+			var index = signed.indexOf(player);
+			if(index > -1)
+			{
+				game = null;
+				callback(player);
+			}
+			else
+			{
+				callback(null);
+			}
+		});
+	}
+	else
+	{
+		callback(null);
+	}
+}
+
+function end(winner, callback)
 {
 	if(game != null && game.state == gamestate.live)
 	{
@@ -204,6 +249,49 @@ function shuffle()
 	game.dire.players = signed.slice(5,10);
 	game.radiant.captain = game.radiant.players[0];
 	game.dire.captain = game.dire.players[0];
+}
+
+function sides(random)
+{
+	if(game != null && game.state < 5)
+	{
+		var temp = game.radiant;
+		var changed = false;
+
+		if(random) 
+		{
+			var rand = Math.floor(Math.random()*2);
+
+			if(rand == 0)
+			{
+				game.radiant = game.dire;
+				game.dire = temp;
+				changed = true;
+			}
+		}
+		else
+		{
+			game.radiant = game.dire;
+			game.dire = temp;
+			changed = true;
+		}
+
+		if(changed)
+		{
+			if(picking == game.radiant)
+			{
+				picking = game.dire;
+			}
+			else
+			{
+				picking = game.radiant;
+			}
+		}
+
+		return true;
+	}
+
+	return false;
 }
 
 function draft()
@@ -326,8 +414,23 @@ bot.addListener('message', function(from, to, text, message) {
 	{
 		switch(str[0])
 		{
+			case '.help':
+				bot.say(to, 'Type .help <command> for further instructions. Commands: .stats, .sign, .out, ' +
+				 '.cancel, .start, .accept, .challenge, .teams, .game, .sides, .go, .shuffle, .pick, .end');
+				break;
 			case '.stats':
-				get_player(str[1], false, function(player) {
+				var nick = '';
+
+				if(str.length > 1)
+				{
+					nick = str[1];
+				}
+				else
+				{
+					nick = from;
+				}
+
+				get_player(nick, false, function(player) {
 					if(player != null)
 					{
 						bot.say(to, 'Nick: ' + player.nick + ' Rating: ' + player.rating + ' Wins: ' + player.wins + ' Losses: ' + 
@@ -346,6 +449,26 @@ bot.addListener('message', function(from, to, text, message) {
 				break;
 			case '.game':
 				break;
+			case '.sides':
+				var response = 'Sides swapped';
+
+				if(str.length > 1 && str[1] == 'random')
+				{
+					sides(true);
+					response = 'Sides randomed';
+				}
+				else if(str.length > 1 && str[1] == 'swap')
+				{
+					sides(false);
+				}
+				else
+				{
+					bot.say(to, 'Error. Type .sides random to randomize sides or .sides swap to swap sides.');
+					break;
+				}
+
+				bot.say(to, response + '. Radiant: ' + get_radiant() + ' Dire: ' + get_dire());
+				break;
 			case '.shuffle':
 				if(game.state == gamestate.shuffle)
 				{
@@ -358,7 +481,7 @@ bot.addListener('message', function(from, to, text, message) {
 				}
 				break;
 			case '.go':
-				if(game.state == gamestate.shuffle)
+				if(game.state == gamestate.shuffle || (game.state == gamestate.draft && game.radiant.players.length + game.dire.players.length == 10))
 				{
 					bot.say(to, 'GAME ON. GL HF BIG PLAYS.');
 					game.state = gamestate.live;
@@ -379,7 +502,7 @@ bot.addListener('message', function(from, to, text, message) {
 							if(game.mode == gamemode.draft)
 							{
 								draft();
-								bot.say(to, 'Draft starts. ' + picking.name + 's turn to pick. Captain: ' + picking.captain + '.');
+								bot.say(to, 'Draft starts. ' + picking.name + 's turn to pick. Captain: ' + picking.captain.nick + '.');
 								bot.say(to, 'Available players: ' + get_signed());
 							}
 							else if(game.mode == gamemode.shuffle)
@@ -397,14 +520,16 @@ bot.addListener('message', function(from, to, text, message) {
 				});
 				break;
 			case '.out':
-				if(out(from))
-				{
-					bot.say(to, from + ' removed. ' + signed.length + '/10')
-				}
-				else 
-				{
-					bot.say(to, 'Error?! :G');	
-				}
+				out(from, function(player) {
+					if(player != null)
+					{
+						bot.say(to, from + ' removed. ' + signed.length + '/10')
+					}
+					else 
+					{
+						bot.say(to, 'Error?! :G');	
+					}
+				});
 				break;
 			case '.pick':			
 				if(game.state != gamestate.draft)
@@ -413,7 +538,7 @@ bot.addListener('message', function(from, to, text, message) {
 				}
 				else if(from != picking.captain)
 				{
-					bot.say(to, picking.captain + 's turn to pick.');
+					bot.say(to, 'NOPE! ' + picking.captain.nick + 's turn to pick.');
 				}
 				else if(str.length != 2)
 				{
@@ -434,12 +559,11 @@ bot.addListener('message', function(from, to, text, message) {
 					if(game.radiant.players.length + game.dire.players.length == 10)
 					{
 						bot.say(to, 'Draft finished. Radiant: ' + get_radiant() + '. Dire: ' + get_dire());
-						bot.say(to, 'GAME ON. GL HF BIG PLAYS.');
-						game.state = gamestate.live;
+						bot.say(to, 'Type .go to proceed to game.');
 					}
 					else
 					{
-						bot.say(to, picking.name + 's turn to pick. Captain: ' + picking.captain + '. Team: ' + team);
+						bot.say(to, picking.name + 's turn to pick. Captain: ' + picking.captain .nick+ '. Team: ' + team);
 						bot.say(to, 'Available players: ' + get_signed());
 					}
 				}
@@ -459,48 +583,51 @@ bot.addListener('message', function(from, to, text, message) {
 				}
 				break;
 			case '.challenge':
-				if(challenge(from))
-				{
-					bot.say(to, from + ' challenged. Type .accept to accept challenge.');
-				}
-				else 
-				{
-					bot.say(to, 'Error?! :G');
-				}
+				challenge(from, function(player) {
+					if(player != null)
+					{
+						bot.say(to, from + ' challenged. Type .accept to accept challenge.');
+					}
+					else 
+					{
+						bot.say(to, 'Error?! :G');	
+					}
+				});
 				break;
 			case '.accept':
-				if(accept(from))
-				{
-					bot.say(to, 'Starting a new game (draft mode). Captains are ' + game.radiant.captain + ' and ' + game.dire.captain + '.' );
-				}
-				else 
-				{
-					bot.say(to, 'Error?! :G');
-				}
+				accept(from, function(player) {
+					if(player != null)
+					{
+						bot.say(to, 'Starting a new game (draft mode). Captains are ' + game.radiant.captain.nick + ' and ' + game.dire.captain.nick + '.' );
+					}
+					else 
+					{
+						bot.say(to, 'Error?! :G');	
+					}
+				});
 				break;
 			case '.end':
-				if(str.length != 2)
+				if(str.length == 2 && !(str[1].toLowerCase() == 'radiant' || str[1].toLowerCase() == 'dire') && end(str[1]))
+				{
+					bot.say(to, 'Game finished. ' + game.winner.name + ' wins.');
+					
+				}
+				else
 				{
 					bot.say(to, 'Error. Type .end <radiant/dire> to end the game.');
 				}
-				else if(end(str[1]))
-				{
-					bot.say(to, 'Game finished. ' + game.winner.name + ' wins.');
-				}
-				else
-				{
-					bot.say(to, 'Error?! :G');	
-				}
 				break;
 			case '.cancel':
-				if(cancel(from)) 
-				{
-					bot.say(to, 'Game canceled.');
-				}
-				else
-				{
-					bot.say(to, 'Error?! :G');	
-				}
+				cancel(from, function(player) {
+					if(player != null)
+					{
+						bot.say(to, 'Game canceled.');
+					}
+					else
+					{
+						bot.say(to, 'Error?! :G');	
+					}
+				});
 				break;
 		}
 	}
