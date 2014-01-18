@@ -4,7 +4,7 @@ var mongo = require('mongodb');
 var monk = require('monk');
 
 // Configs
-var config = require('config.json');
+var config = require('./config.json');
 
 // Db
 var db = monk('localhost:27017/dotabotti');
