@@ -33,6 +33,12 @@ function Bot(config) {
 
 	// Add listener for messages
 	this.client.addListener('message', function(from, to, text, message) {
+		// Make sure this is on a channel
+		if (to[0] != '#') {
+			// Ignore it
+			return;
+		}
+
 		// Check if this is a command
 		if (text.substr(0, self.config.commandPrefix.length) == self.config.commandPrefix) {
 			// Check which command it was
