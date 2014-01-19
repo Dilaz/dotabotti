@@ -80,9 +80,7 @@ function Bot(config) {
 				// Check if game was canceled
 				if (resp.cancelGame) {
 					self.client.say(data.to, 'Captain removed. Canceling the game..');
-					self.game.cancelGame(function() {
-						// ...
-					});
+					self.emit('command:cancel', data);
 
 					return;
 				}
@@ -118,7 +116,14 @@ function Bot(config) {
 
 	// Start
 	self.on('command:start', function(data) {
-
+		self.game.start(function(resp)) {
+			if (resp.error) {
+				self.client.say(data.to, 'Error: ' + resp.message);
+			}
+			else {
+				self.client.say(data.to, 'Starting a new game (shuffle mode).');
+			}
+		}
 	});
 
 	// Accept
