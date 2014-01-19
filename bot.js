@@ -42,7 +42,7 @@ function Bot(config) {
 			self.emit('command:' + words[0].toLowerCase(), {
 				from: from,
 				to: to,
-				arguments: words.splice(1).join(' ')
+				args: words.splice(1)
 			});
 		}
 	});
@@ -198,7 +198,14 @@ function Bot(config) {
 
 	// End
 	self.on('command:end', function(data) {
-
+		self.game.end(data.args, function(resp) {
+			if (resp.error) {
+				self.client.say(data.to, 'Error: ' + resp.message);
+			}
+			else {
+				self.client.say(data.to, 'Game ended. Winner is ' + resp.winner + '!');
+			}
+		});
 	});
 };
 

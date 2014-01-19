@@ -305,5 +305,47 @@ Game.prototype.start = function(callback) {
 	});
 }
 
+Game.prototype.end = function(winner, callback) {
+	// Check game state
+	if (this.gamestate != this.Gamestate.live) {
+		return callback({
+			error: true,
+			message: "Invalid gamestate"
+		});
+	}
+
+	// Check winner
+	winner = winner.toLowerCase();
+	if (winner != 'dire' && winner != 'radiant') {
+		return callback({
+			error: true,
+			message: "Invalid winning team. Use 'dire' or 'radiant'"
+		});
+	}
+
+	// Change gamestate
+	this.gamestate = this.Gamestate.end;
+
+	// Clear captains
+	this.direCaptain = null;
+	this.radiantCaptain = null;
+
+	// Remove players
+	this.players.forEach(function(player) {
+		delete player;
+	});
+	this.players = [];
+
+	// Clear teams
+	this.radiantPlayers = [];
+	this.direPlayers = [];
+
+	// Done
+	callback({
+		error: null,
+		winner: winner
+	});
+}
+
 // Export Game-object as module
 module.exports = Game;
