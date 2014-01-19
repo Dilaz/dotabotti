@@ -18,21 +18,21 @@ function Game(config) {
 	// Gamemode enum
 	this.Gamemode = {
 		draft : 0,
-		shuffle : 1,
-		balanced : 2
+		shuffle : 1
 	};
 
 	// Variables
 	this.config = config;
 	this.gamestate = this.Gamestate.ended;
+	this.gamemode = this.Gamemode.draft;
 	this.players = [];
 	this.direPlayers = [];
 	this.radiantPlayers = [];
 	this.radiantCaptain = null;
 	this.direCaptain = null;
 
-	this.splitToTeams = function() {
-		
+	var splitToTeams = function() {
+
 	}
 };
 
@@ -83,11 +83,11 @@ Game.prototype.addPlayer = function(user, callback) {
 
 Game.prototype.removePlayer = function(user, callback) {
 	// Check if player is captain
-	if (user == this.radiantCaptain || user == this.direCaptain) {
+	if ((this.radiantCaptain != null && user == this.radiantCaptain.name)
+	 || (this.direCaptain != null && user == this.direCaptain.name)) {
 		// Done.
 		return callback({
 			error: null,
-			players: 0,
 			cancelGame: true
 		});
 	}
@@ -100,10 +100,16 @@ Game.prototype.removePlayer = function(user, callback) {
 		});
 	}
 
-	// Check if player is already in the game
-	for (var i in players) {
-		if (players[i].name == user) {
+	// Check if player is in the game
+	for (var i in this.players) {
+		if (this.players[i].name == user) {
 			// Remove player from list and return
+			this.players.splice(i, 1);
+
+			// Done
+			return callback({
+				error: null
+			});
 		}
 	}
 
@@ -122,6 +128,9 @@ Game.prototype.challenge = function(user, callback) {
 			message: "Invalid gamestate"
 		});
 	}
+
+	// Change game mode
+	this.gamemode = this.Gamemode.shuffle;
 
 	// Add player to list
 	var newUser = new User(user);
@@ -197,7 +206,7 @@ Game.prototype.getPlayers = function(callback) {
 	// Return list of nicks
 	callback({
 		error: null,
-		players: list.join(' ')
+		players: list.join(' ') + ' (' + this.players.length + '/10)'
 	});
 }
 
@@ -228,10 +237,10 @@ Game.prototype.cancel = function(callback) {
 	// Yay, done
 	callback({
 		error: null
-	})
+	});
 }
 
-Game.prototype.start = function(callback) {
+Game.prototype.go = function(callback) {
 	// Check game state
 	if (this.gamestate != this.Gamestate.signup) {
 		return callback({
@@ -253,7 +262,36 @@ Game.prototype.start = function(callback) {
 
 	// Done
 	callback({
-		error: null;
+		error: null
+	});
+}
+
+Game.prototype.start = function(callback) {
+	// Check game state
+	if (this.gamestate != this.Gamestate.ended) {
+		return callback({
+			error: true,
+			message: "Invalid gamestate"
+		});
+	}
+
+	// Check players
+	if (this.players.length != 10) {
+		return callback({
+			error: true,
+			message: "Game is full"
+		});
+	}
+
+	// Change gamestate
+	this.gamestate = this.Gamestate.signup;
+
+	// Change gamemode
+	this.gamemode = this.Gamemode.shuffle;
+
+	// Done
+	callback({
+		error: null
 	});
 }
 
