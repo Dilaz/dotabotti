@@ -117,7 +117,7 @@ Game.prototype.removePlayer = function(user, callback) {
 	// Player not found
 	callback({
 		error: true,
-		message: "You haven't signed in"
+		message: "You haven't signed"
 	});
 }
 
@@ -261,8 +261,14 @@ Game.prototype.go = function(callback) {
 		});
 	}
 
-	// Change gamestate
-	this.gamestate = this.Gamestate.live;
+	// If this is draft, start drafting
+	if (this.gamemode == this.Gamemode.drafting) {
+		this.gamestate = this.Gamestate.live;
+	}
+	else {
+		// Shuffle -> game is live
+		this.gamestate = this.Gamestate.live;
+	}
 
 	// Done
 	callback({
