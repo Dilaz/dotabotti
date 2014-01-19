@@ -138,7 +138,6 @@ function Bot(config) {
 	// Accept
 	self.on('command:accept', function(data) {
 		self.game.accept(data.from, function(resp) {
-			console.log(resp);
 			if (resp.error) {
 				self.client.say(data.to, 'Error: ' + resp.message);
 			}
@@ -177,7 +176,14 @@ function Bot(config) {
 
 	// Go
 	self.on('command:go', function(data) {
-
+		self.game.go(data.from, function(resp) {
+			if (resp.error) {
+				self.client.say(data.to, 'Error: ' + resp.message);
+			}
+			else {
+				self.client.say(data.to, 'GAME ON. GL HF BIG PLAYS.');
+			}
+		});
 	});
 
 	// Shuffle
