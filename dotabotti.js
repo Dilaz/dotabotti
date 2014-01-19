@@ -1,44 +1,14 @@
 // Libs
-var irc = require('irc');
-var mongo = require('mongodb');
-var monk = require('monk');
+var Bot = require('./bot.js');
 
 // Configs
 var config = require('./config.json');
 
-// Db
-var db = monk('localhost:27017/dotabotti');
-
-// Init bot
-var bot = new irc.Client(config.server, config.nick, {
-	channels: config.channels,
-	realName: config.realName,
-	debug: config.debug
-});
-
-// Add error listener
-bot.addListener('error', function(message) {
-    console.log('error: ', message);
-});
+// Create draftbot
+var bot = new Bot(config);
 
 
-// Gamestate object
-gamestate = {
-	challenged : 0,
-	accepted : 1,
-	signup : 2,
-	draft : 3,
-	shuffle : 4,
-	live : 5,
-	ended : 6
-}
-
-// Gamemode object
-gamemode = {
-	draft : 0,
-	shuffle : 1
-}
-
+/*
 var game = null;
 var signed = [];
 var picking = null;
@@ -415,8 +385,7 @@ bot.addListener('message', function(from, to, text, message) {
 		switch(str[0])
 		{
 			case '.help':
-				bot.say(to, 'Type .help <command> for further instructions. Commands: .stats, .sign, .out, ' +
-				 '.cancel, .start, .accept, .challenge, .teams, .game, .sides, .go, .shuffle, .pick, .end');
+
 				break;
 			case '.stats':
 				var nick = '';
@@ -631,4 +600,4 @@ bot.addListener('message', function(from, to, text, message) {
 				break;
 		}
 	}
-});
+});*/
