@@ -54,7 +54,7 @@ Game.prototype.addPlayer = function(user, callback) {
 		});
 	}
 	// Check player amount
-	else if (players.length == 10) {
+	else if (this.players.length == 10) {
 		return callback({
 			error: true,
 			message: "Game is full"
@@ -62,8 +62,8 @@ Game.prototype.addPlayer = function(user, callback) {
 	}
 
 	// Check if player is already in the game
-	for (var i in players) {
-		if (players[i].name == user) {
+	for (var i in this.players) {
+		if (this.players[i].name == user) {
 			return callback({
 				error: true,
 				message: "You have already signed"
@@ -72,7 +72,7 @@ Game.prototype.addPlayer = function(user, callback) {
 	}
 
 	// Add player to list
-	players.push(new User(user));
+	this.players.push(new User(user));
 
 	// Yay, done
 	callback({
@@ -108,7 +108,8 @@ Game.prototype.removePlayer = function(user, callback) {
 
 			// Done
 			return callback({
-				error: null
+				error: null,
+				players: this.players.length
 			});
 		}
 	}
@@ -225,6 +226,9 @@ Game.prototype.cancel = function(callback) {
 	this.radiantCaptain = null;
 
 	// Remove players
+	this.players.forEach(function(player) {
+		delete player;
+	});
 	this.players = [];
 
 	// Remove teams
@@ -276,7 +280,7 @@ Game.prototype.start = function(callback) {
 	}
 
 	// Check players
-	if (this.players.length != 10) {
+	if (this.players.length == 10) {
 		return callback({
 			error: true,
 			message: "Game is full"
