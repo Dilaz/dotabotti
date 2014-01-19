@@ -23,7 +23,8 @@ function Bot(config) {
 	this.client = new irc.Client(config.server, config.nick, {
 		channels: config.channels,
 		realName: config.realName,
-		debug: config.debug
+		debug: config.debug,
+		floodProtection: true
 	});
 
 	// Add error listener
@@ -72,8 +73,9 @@ function Bot(config) {
 			}
 			else {
 				self.client.say(data.to, data.from + ' signed. ' + resp.players.toString() + '/10');
-				if (resp.players == 10) {
+				if (resp.players == 10 && self.game.gamemode == self.game.Gamemode.shuffle) {
 					self.client.say(data.to, "Game is full. You can start with " + self.config.commandPrefix + "go");
+					self.emit('command:shuffle', data);
 				}
 			}
 		});
@@ -194,7 +196,14 @@ function Bot(config) {
 
 	// Shuffle
 	self.on('command:shuffle', function(data) {
-
+		self.game.shuffle(function(resp) {
+			if (resp.error) {
+				self.client.say(data.to, 'Error: ' + resp.message);
+			}
+			else {
+				self.client.say(data.to, 'Radiant: ' + resp.radiantPlayers + ' Dire: ' + resp.direPlayers);
+			}
+		});
 	});
 
 	// Pick
@@ -204,7 +213,7 @@ function Bot(config) {
 
 	// End
 	self.on('command:end', function(data) {
-		self.game.end(data.args, function(resp) {
+		self.game.end(data.args[0], function(resp) {
 			if (resp.error) {
 				self.client.say(data.to, 'Error: ' + resp.message);
 			}

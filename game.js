@@ -31,8 +31,16 @@ function Game(config) {
 	this.radiantCaptain = null;
 	this.direCaptain = null;
 
-	var splitToTeams = function() {
+	this.shufflePlayers = function() {
+		// ?? :D
+		for(var j, x, i = this.players.length; i; j = Math.floor(Math.random() * i), x = this.players[--i], this.players[i] = this.players[j], this.players[j] = x);
+	}
 
+	this.splitTeams = function() {
+		// Copy list
+		var list = this.players.concat();
+		this.radiantPlayers = list.splice(0,5);
+		this.direPlayers = list;
 	}
 };
 
@@ -244,7 +252,7 @@ Game.prototype.cancel = function(callback) {
 	});
 }
 
-Game.prototype.go = function(callback) {
+Game.prototype.go = function(user, callback) {
 	// Check game state
 	if (this.gamestate != this.Gamestate.signup) {
 		return callback({
@@ -258,6 +266,21 @@ Game.prototype.go = function(callback) {
 		return callback({
 			error: true,
 			message: "Game is not full"
+		});
+	}
+
+	// Check that user is in the game
+	var found = false;
+	this.players.forEach(function(player) {
+		if (player.name == user) {
+			found = true;
+			return;
+		}
+	});
+	if (!found) {
+		return callback({
+			error: true,
+			message: user + " is not in the game"
 		});
 	}
 
@@ -285,14 +308,6 @@ Game.prototype.start = function(callback) {
 		});
 	}
 
-	// Check players
-	if (this.players.length == 10) {
-		return callback({
-			error: true,
-			message: "Game is full"
-		});
-	}
-
 	// Change gamestate
 	this.gamestate = this.Gamestate.signup;
 
@@ -302,6 +317,53 @@ Game.prototype.start = function(callback) {
 	// Done
 	callback({
 		error: null
+	});
+}
+
+Game.prototype.shuffle = function(callback) {
+	// Check game state
+	if (this.gamestate != this.Gamestate.signup) {
+		return callback({
+			error: true,
+			message: "Invalid gamestate"
+		});
+	}
+
+	// Check players
+	if (this.players.length != 10) {
+		return callback({
+			error: true,
+			message: "Not enough players"
+		});
+	}
+
+	// Check gamemode
+	if (this.gamemode != this.Gamemode.shuffle) {
+		return callback({
+			error: true,
+			message: "Invalid gamemode"
+		});
+	}
+
+	// Shuffle players
+	this.shufflePlayers();
+
+	// Split players into teams
+	this.splitTeams();
+
+	// Get team names
+	var radiantPlayers = [];
+	var direPlayers = [];
+	for (var i = 0; i < 5; i++) {
+		radiantPlayers.push(this.radiantPlayers[i].name);
+		direPlayers.push(this.direPlayers[i].name);
+	}
+
+	// Done
+	callback({
+		error: null,
+		radiantPlayers: radiantPlayers.join(', '),
+		direPlayers: direPlayers.join(', ')
 	});
 }
 
@@ -315,8 +377,7 @@ Game.prototype.end = function(winner, callback) {
 	}
 
 	// Check winner
-	winner = winner.toLowerCase();
-	if (winner != 'dire' && winner != 'radiant') {
+	if (!winner || (winner.toLowerCase() != 'dire' && winner.toLowerCase() != 'radiant')) {
 		return callback({
 			error: true,
 			message: "Invalid winning team. Use 'dire' or 'radiant'"
