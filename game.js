@@ -30,6 +30,10 @@ function Game(config) {
 	this.radiantPlayers = [];
 	this.radiantCaptain = null;
 	this.direCaptain = null;
+
+	this.splitToTeams = function() {
+		
+	}
 };
 
 //
