@@ -104,10 +104,16 @@ function Bot(config) {
 				self.client.say(data.to, 'Error: ' + resp.message);
 			}
 			else {
-				self.client.say(data.to, data.from + ' signed. ' + resp.players.toString() + '/10');
-				if (resp.players == 10 && self.game.gamemode == self.game.Gamemode.shuffle) {
-					self.client.say(data.to, "Game is full. You can start with " + self.config.commandPrefix + "go");
-					self.emit('command:shuffle', data);
+				// Check if game should be started
+				if (resp.startGame) {
+					self.emit('command:start', data);
+				}
+				else {
+					self.client.say(data.to, data.from + ' signed. ' + resp.players.toString() + '/10');
+					if (resp.players == 10 && self.game.gamemode == self.game.Gamemode.shuffle) {
+						self.client.say(data.to, "Game is full. You can start with " + self.config.commandPrefix + "go or shuffle teams again with " + self.config.commandPrefix + 'shuffle');
+						self.emit('command:shuffle', data);
+					}
 				}
 			}
 		});
