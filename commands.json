@@ -1,0 +1,18 @@
+{
+	"help": "Usage: _COMMAND_ [command] - Displays list of commands or if command is given, help for that command",
+	"stats": "Usage: _COMMAND_ [user] - Displays stats. If user is given, displays stats for that user",
+	"sign": "Usage: _COMMAND_ - Signs in to game. If there is not game started, it starts one in shuffle mode",
+	"signed": "Usage: _COMMAND_ - Diplsays list of singed players",
+	"out": "Usage: _COMMAND_ - Signs out of the game",
+	"cancel": "Usage: _COMMAND_ - Cancels the game",
+	"start": "Usage: _COMMAND_ - Starts the game in shuffle mode",
+	"accept": "Usage: _COMMAND_ - Accepts draft mode challenge. See _PREFIX_challenge",
+	"challenge": "Usage: _COMMAND_ - Starts a game in draft mode. User will be selected as radiant captain. See _PREFIX_accept",
+	"teams": "Usage: _COMMAND_ - Displays current teams. Only usable when game is full. See _PREFIX_sides",
+	"game": "Usage: _COMMAND_ - ??",
+	"sides": "Usage: _COMMAND_ [random] - Swaps radiant and dire team. If parameter \"random\" is given, sides are randomed",
+	"go": "Usage: _COMMAND_ - Starts the game when game is ready. See _PREFIX_end",
+	"shuffle": "Usage: _COMMAND_ - Shuffles the players into teams. Only usable in shuffle mode",
+	"pick": "USAGE: _COMMAND_ <user> - Picks given user to your team. Only usable by team captain in draft mode. See _PREFIX_challenge",
+	"end": "USAGE: _COMMAND_ <radiant | dire> - Ends the game and declares given team as winner"
+}
