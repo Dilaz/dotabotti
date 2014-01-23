@@ -10,9 +10,8 @@ function Game(config) {
 		signup : 2,
 		draft : 3,
 		shuffle : 4,
-		balance : 5,
-		live : 6,
-		ended : 7
+		live : 5,
+		ended : 6
 	};
 
 	// Gamemode enum
@@ -55,7 +54,16 @@ function Game(config) {
  */
 Game.prototype.addPlayer = function(user, callback) {
 	// Check game state
-	if (this.gamestate != this.Gamestate.signup) {
+	if (this.gamestate == this.Gamestate.ended) {
+		// Start the game in shuffle-mode
+		return callback({
+			error: null,
+			startGame: true,
+			user: user
+		});
+	}
+	// Any other gamestate
+	else if (this.gamestate != this.Gamestate.signup) {
 		return callback({
 			error: true,
 			message: "Invalid gamestate"
@@ -96,7 +104,8 @@ Game.prototype.removePlayer = function(user, callback) {
 		// Done.
 		return callback({
 			error: null,
-			cancelGame: true
+			cancelGame: true,
+			players: this.players.length
 		});
 	}
 
