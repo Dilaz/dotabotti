@@ -246,7 +246,14 @@ function Bot(config) {
 
 	// Pick
 	self.on('command:pick', function(data) {
-
+		self.game.pick(data.from, data.args[0], function(resp) {
+			if (resp.error) {
+				self.client.say(data.to, 'Error: ' + resp.message);
+			}
+			else {
+				self.client.say(data.to, 'Radiant: ' + resp.radiantPlayers + ' Dire: ' + resp.direPlayers);
+			}
+		});
 	});
 
 	// End
