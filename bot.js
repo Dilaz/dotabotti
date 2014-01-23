@@ -6,6 +6,7 @@ var events = require('events');
 var util = require('util');
 var Game = require('./game.js');
 var User = require('./user.js');
+var commands = require('./commands.json');
 
 // Db
 //var db = monk('localhost:27017/dotabotti');
@@ -54,15 +55,46 @@ function Bot(config) {
 		}
 	});
 
+	// Add command name and prefix to command help
+	for (var command in commands) {
+		commands[command] = commands[command]
+			.replace('_COMMAND_', this.config.commandPrefix + command)
+			.replace('_PREFIX_', this.config.commandPrefix);
+	}
+
 	//
 	// COMMANDS
 	//
 
 	// Help
 	self.on('command:help', function(data) {
-		var commands = [ 'stats', 'sign', 'out', 'cancel', 'start', 'accept', 'challenge', 'teams', 'game', 'sides', 'go', 'shuffle', 'pick', 'end' ];
-		commands = commands.join(' ' + self.config.commandPrefix).split(' ');
-		self.client.say(data.to, 'Type ' + self.config.commandPrefix + 'help <command> for further instructions. Commands: ' + commands.join(', '));
+		var command = data.args[0];
+		// Check if command is given
+		if (command) {
+			// Remove prefix from command
+			if (command.indexOf(self.config.commandPrefix) == 0) {
+				command = command.substr(self.config.commandPrefix.length);
+			}
+
+			// Check if command exists
+			if (typeof(commands[command]) == 'undefined') {
+				self.client.say(data.to, "Unknown command.");
+			}
+			else {
+				console.log(command.indexOf(self.config.commandPrefix));
+				self.client.say(data.to, commands[command]);
+			}
+		}
+		// List all commands
+		else {
+			var commandString = '';
+			var commandList = [];
+			for (var command in commands) {
+				commandList.push(self.config.commandPrefix + command);
+			}
+			commandString = commandList.join(', ');
+			self.client.say(data.to, 'Type ' + self.config.commandPrefix + 'help <command> for further instructions. Commands: ' + commandString);
+		}
 	});
 
 	// Sign
