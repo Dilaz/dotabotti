@@ -45,13 +45,21 @@ function Game(config) {
 	this.radiantCaptain = null;
 	this.direCaptain = null;
 
+	//
 	// Private methods
-
+	// 
+	
+	/**
+	 * Shuffles players that are signed up
+	 */
 	this.shufflePlayers = function() {
 		// ?? :D
 		for(var j, x, i = this.players.length; i; j = Math.floor(Math.random() * i), x = this.players[--i], this.players[i] = this.players[j], this.players[j] = x);
 	}
 
+	/**
+	 * Splits players into teams
+	 */
 	this.splitTeams = function() {
 		// Copy list
 		var list = this.players.concat();
@@ -59,11 +67,17 @@ function Game(config) {
 		this.direPlayers = list;
 	}
 
+	/**
+	 * Clears both teams from players
+	 */
 	this.clearTeams = function() {
 		this.radiantPlayers = [];
 		this.direPlayers = [];
 	}
 
+	/**
+	 * Inits draft-object
+	 */
 	this.startDraft = function() {
 		// Copy all player names to draft-object
 		var self = this;
@@ -85,6 +99,9 @@ function Game(config) {
 		this.draft.pickingCaptain = this.radiantCaptain;
 	}
 
+	/**
+	 * Ends draft and removes data from draft-object
+	 */
 	this.endDraft = function() {
 		// Clear the draft-object
 		this.draft.players = [];
