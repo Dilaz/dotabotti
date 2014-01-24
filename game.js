@@ -101,8 +101,8 @@ function Game(config) {
 //
 
 /**
- * Add player to the game
- * @param string   user     Player name to be added
+ * Adds player to the game
+ * @param {String}   user     Player name to be added
  * @param {Function} callback Callback function to call after fail or success
  */
 Game.prototype.addPlayer = function(user, callback) {
@@ -155,6 +155,11 @@ Game.prototype.addPlayer = function(user, callback) {
 	});
 }
 
+/**
+ * Removes player from the game
+ * @param  {String}   user     	User to be removed
+ * @param  {Function} callback 	Callback function
+ */
 Game.prototype.removePlayer = function(user, callback) {
 	// Check if player is captain
 	if ((this.radiantCaptain != null && user == this.radiantCaptain)
@@ -217,6 +222,11 @@ Game.prototype.removePlayer = function(user, callback) {
 
 }
 
+/**
+ * Starts the game in draft mode
+ * @param  {String}   user     User that starts the draft
+ * @param  {Function} callback Callback function
+ */
 Game.prototype.challenge = function(user, callback) {
 	// Check game state
 	if (this.gamestate != this.Gamestate.ended) {
@@ -245,6 +255,11 @@ Game.prototype.challenge = function(user, callback) {
 	});
 }
 
+/**
+ * Accepts challenge to draft game after challenge
+ * @param  {String}   user     User that accepts the challenge
+ * @param  {Function} callback Callback function
+ */
 Game.prototype.accept = function(user, callback) {
 	// Check game state
 	if (this.gamestate != this.Gamestate.challenged) {
@@ -280,6 +295,12 @@ Game.prototype.accept = function(user, callback) {
 	});
 }
 
+/**
+ * Picks given player to team in draft state
+ * @param  {String}   user     User giving the command
+ * @param  {String}   picked   First argument, player to be picked
+ * @param  {Function} callback Callback function
+ */
 Game.prototype.pick = function(user, picked, callback) {
 	// Check game state
 	if (this.gamestate != this.Gamestate.draft) {
@@ -388,6 +409,10 @@ function obfuscate_name(name) {
 	return '[' + name[0] + ']' + name.substr(1);
 }
 
+/**
+ * Gets list of players signed in the game
+ * @param  {Function} callback Callback function
+ */
 Game.prototype.getPlayers = function(callback) {
 	// Check if list is empty
 	if (this.players.length == 0) {
@@ -410,6 +435,10 @@ Game.prototype.getPlayers = function(callback) {
 	});
 }
 
+/**
+ * Cancels the game
+ * @param  {Function} callback Callback function
+ */
 Game.prototype.cancel = function(callback) {
 	// Check game state
 	if (this.gamestate == this.Gamestate.ended) {
@@ -437,12 +466,20 @@ Game.prototype.cancel = function(callback) {
 	// Reset gamestate
 	this.gamestate = this.Gamestate.ended;
 
+	// End draft just in case
+	this.endDraft();
+
 	// Yay, done
 	callback({
 		error: null
 	});
 }
 
+/**
+ * Starts the game after draft or shuffle
+ * @param  {String}   user     User giving the command
+ * @param  {Function} callback Callback function
+ */
 Game.prototype.go = function(user, callback) {
 	// Check game state
 	if (this.gamestate != this.Gamestate.shuffle
@@ -477,6 +514,10 @@ Game.prototype.go = function(user, callback) {
 	});
 }
 
+/**
+ * Starts the game in shuffle mode
+ * @param  {Function} callback Callback function
+ */
 Game.prototype.start = function(callback) {
 	// Check game state
 	if (this.gamestate != this.Gamestate.ended) {
@@ -498,6 +539,10 @@ Game.prototype.start = function(callback) {
 	});
 }
 
+/**
+ * Shuffles the players and teams in shuffle mode
+ * @param  {Function} callback Callback function
+ */
 Game.prototype.shuffle = function(callback) {
 	// Check game state
 	if (this.gamestate != this.Gamestate.shuffle) {
@@ -529,6 +574,11 @@ Game.prototype.shuffle = function(callback) {
 	});
 }
 
+/**
+ * Ends the game after it has gone live
+ * @param  {String}   winner   Winning team. 'radiant' or 'dire'
+ * @param  {Function} callback Callback function
+ */
 Game.prototype.end = function(winner, callback) {
 	// Check game state
 	if (this.gamestate != this.Gamestate.live) {
@@ -559,8 +609,8 @@ Game.prototype.end = function(winner, callback) {
 	});
 	this.players = [];
 
-	// Clear teams
-	this.clearTeams();
+	// End draft just in case
+	this.endDraft();
 
 	// Done
 	callback({
@@ -569,6 +619,10 @@ Game.prototype.end = function(winner, callback) {
 	});
 }
 
+/**
+ * Lists Radiant and Dire team players
+ * @param  {Function} callback Callback function
+ */
 Game.prototype.teams = function(callback) {
 	// Check game state
 	if ([this.Gamestate.draft, this.Gamestate.live, this.Gamestate.shuffle].indexOf(this.gamestate) == -1) {
