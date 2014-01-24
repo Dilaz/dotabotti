@@ -1,6 +1,9 @@
 {
-	"channels": [ "#dotabotti_testi" ],
-	"server": "irc.freenode.net",
-	"nick": "Meepo",
-	"debug": true
+	"channels": [ "#channel" ],
+	"server": "irc.stealth.net",
+	"nick": "Dotabotti",
+	"altNick": "Dotabotti_",
+	"realName": "Dotabotti",
+	"debug": true,
+	"commandPrefix": "!"
 }
