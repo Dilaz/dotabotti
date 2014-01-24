@@ -55,6 +55,59 @@ function Bot(config) {
 		}
 	});
 
+	// Add listener for nick change
+	this.client.addListener('nick', function(oldnick, newnick, channels, message) {
+		// Check if current game has player with that name
+		for (var i in this.game.players) {
+			if (this.game.players[i].name == oldnick) {
+				// Change the name
+				this.game.players[i].name = newnick;
+
+				// Check draft pool
+				for (var j in this.game.draft.players) {
+					if (this.game.draft.players[j] == oldnick) {
+						this.game.draft.players[j] = newnick;
+						break;
+					}
+				}
+
+				// Check radiant team 
+				for (var j in this.game.radiantPlayers) {
+					if (this.game.radiantPlayers[j] == oldnick) {
+						this.game.radiantPlayers[j] = newnick;
+						break;
+					}
+				}
+
+				// Check dire team 
+				for (var j in this.game.direPlayers) {
+					if (this.game.direPlayers[j] == oldnick) {
+						this.game.direPlayers[j] = newnick;
+						break;
+					}
+				}
+
+				// Check captains
+				if (this.game.radiantCaptain == oldnick) {
+					this.game.radiantCaptain = newnick;
+				}
+				else if (this.game.direCaptaina == oldnick) {
+					this.game.direCaptain = newnick;
+				}
+
+				// Also check picking captain
+				if (this.game.draft.pickingCaptain == oldnick) {
+					this.game.draft.pickingCaptain = newnick;
+				}
+
+				// Done
+				break;
+			}
+		}
+	});
+
+	this.removePlayers
+
 	// Add command name and prefix to command help
 	for (var command in commands) {
 		commands[command] = commands[command]
