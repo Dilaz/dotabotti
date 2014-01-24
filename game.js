@@ -10,8 +10,9 @@ function Game(config) {
 		signup : 2,
 		draft : 3,
 		shuffle : 4,
-		live : 5,
-		ended : 6
+		ready : 5,
+		live : 6,
+		ended : 7
 	};
 
 	// Gamemode enum
@@ -19,6 +20,20 @@ function Game(config) {
 		draft : 0,
 		shuffle : 1
 	};
+
+	// Teams
+	this.Teams = [
+		'Radiant',
+		'Dire'
+	];
+
+	// Drafting object
+	this.draft = {
+		players: [],
+		pickingTeam: 0,
+		pickingCaptain: null
+	};
+	
 
 	// Variables
 	this.config = config;
@@ -30,6 +45,8 @@ function Game(config) {
 	this.radiantCaptain = null;
 	this.direCaptain = null;
 
+	// Private methods
+
 	this.shufflePlayers = function() {
 		// ?? :D
 		for(var j, x, i = this.players.length; i; j = Math.floor(Math.random() * i), x = this.players[--i], this.players[i] = this.players[j], this.players[j] = x);
@@ -40,6 +57,42 @@ function Game(config) {
 		var list = this.players.concat();
 		this.radiantPlayers = list.splice(0,5);
 		this.direPlayers = list;
+	}
+
+	this.clearTeams = function() {
+		this.radiantPlayers = [];
+		this.direPlayers = [];
+	}
+
+	this.startDraft = function() {
+		// Copy all player names to draft-object
+		var self = this;
+		this.players.forEach(function(player) {
+			// Skip captains
+			if (player.name == self.radiantCaptain || player.name == self.direCaptain) {
+				return;
+			}
+
+			// Add player to list
+			self.draft.players.push(player.name);
+		});
+
+		// Add captains to teams
+		this.radiantPlayers.push(this.radiantCaptain);
+		this.direPlayers.push(this.direCaptain);
+
+		// Set picking captain name
+		this.draft.pickingCaptain = this.radiantCaptain;
+	}
+
+	this.endDraft = function() {
+		// Clear the draft-object
+		this.draft.players = [];
+		this.pickingTeam = 0;
+		this.pickingCaptain = null;
+
+		// Clear the teams
+		this.clearTeams();
 	}
 };
 
@@ -69,13 +122,6 @@ Game.prototype.addPlayer = function(user, callback) {
 			message: "Invalid gamestate"
 		});
 	}
-	// Check player amount
-	else if (this.players.length == 10) {
-		return callback({
-			error: true,
-			message: "Game is full"
-		});
-	}
 
 	// Check if player is already in the game
 	for (var i in this.players) {
@@ -90,6 +136,18 @@ Game.prototype.addPlayer = function(user, callback) {
 	// Add player to list
 	this.players.push(new User(user));
 
+	// Check player amount
+	if (this.players.length == 10) {
+		// Change game state according to mode
+		if (this.gamemode == this.Gamemode.shuffle) {
+			this.gamestate = this.Gamestate.shuffle;
+		}
+		else {
+			this.gamestate = this.Gamestate.draft;
+			this.startDraft();
+		}
+	}
+
 	// Yay, done
 	callback({
 		error: null,
@@ -99,8 +157,8 @@ Game.prototype.addPlayer = function(user, callback) {
 
 Game.prototype.removePlayer = function(user, callback) {
 	// Check if player is captain
-	if ((this.radiantCaptain != null && user == this.radiantCaptain.name)
-	 || (this.direCaptain != null && user == this.direCaptain.name)) {
+	if ((this.radiantCaptain != null && user == this.radiantCaptain)
+	 || (this.direCaptain != null && user == this.direCaptain)) {
 		// Done.
 		return callback({
 			error: null,
@@ -110,7 +168,7 @@ Game.prototype.removePlayer = function(user, callback) {
 	}
 
 	// Check game state
-	if (this.gamestate != this.Gamestate.signup) {
+	if ([ this.Gamestate.signup, this.Gamestate.shuffle, this.Gamestate.draft, this.Gamestate.ready ].indexOf(this.gamestate) == -1) {
 		return callback({
 			error: true,
 			message: "Invalid gamestate"
@@ -118,24 +176,45 @@ Game.prototype.removePlayer = function(user, callback) {
 	}
 
 	// Check if player is in the game
+	var playerFound = false;
 	for (var i in this.players) {
 		if (this.players[i].name == user) {
 			// Remove player from list and return
 			this.players.splice(i, 1);
-
-			// Done
-			return callback({
-				error: null,
-				players: this.players.length
-			});
+			playerFound = true;
+			break;
 		}
 	}
 
 	// Player not found
+	if (!playerFound) {
+		return callback({
+			error: true,
+			message: "You haven't signed"
+		});
+	}
+
+	// If game was full, return to signup state
+	var returnToSignup = false;
+	if (this.gamestate == this.Gamestate.shuffle) {
+		this.gamestate = this.Gamestate.signup;
+		returnToSignup = true;
+	}
+	else if (this.gametate == this.Gamestate.draft
+	|| this.gamestate == this.Gamestate.ready) {
+		// End draft
+		this.endDraft();
+		this.gamestate = this.Gamestate.signup;
+		returnToSignup = true;
+	}
+
+	// Done
 	callback({
-		error: true,
-		message: "You haven't signed"
+		error: null,
+		players: this.players.length,
+		returnToSignup: returnToSignup
 	});
+
 }
 
 Game.prototype.challenge = function(user, callback) {
@@ -148,14 +227,14 @@ Game.prototype.challenge = function(user, callback) {
 	}
 
 	// Change game mode
-	this.gamemode = this.Gamemode.shuffle;
+	this.gamemode = this.Gamemode.draft;
 
 	// Add player to list
 	var newUser = new User(user);
 	this.players.push(newUser);
 
 	// Add player as radiant captain
-	this.radiantCaptain = newUser;
+	this.radiantCaptain = newUser.name;
 
 	// Change game state
 	this.gamestate = this.Gamestate.challenged;
@@ -188,7 +267,7 @@ Game.prototype.accept = function(user, callback) {
 	this.players.push(newUser);
 
 	// Add player as radiant captain
-	this.direCaptain = newUser;
+	this.direCaptain = newUser.name;
 
 	// Change game state
 	this.gamestate = this.Gamestate.signup;
@@ -196,8 +275,111 @@ Game.prototype.accept = function(user, callback) {
 	// Yay, done
 	callback({
 		error: null,
-		radiantCaptain: this.radiantCaptain.name,
-		direCaptain: this.direCaptain.name
+		radiantCaptain: this.radiantCaptain,
+		direCaptain: this.direCaptain
+	});
+}
+
+Game.prototype.pick = function(user, picked, callback) {
+	// Check game state
+	if (this.gamestate != this.Gamestate.draft) {
+		return callback({
+			error: true,
+			message: "Invalid gamestate"
+		});
+	}
+
+	// Check that picked player is given
+	if (!picked || picked.length == 0) {
+		return callback({
+			error: true,
+			message: "Player name not given"
+		});
+	}
+
+	// Check that user is captain
+	if (user != this.radiantCaptain && user != this.direCaptain) {
+		return callback({
+			error: true,
+			message: "Only captains can pick players"
+		});
+	}
+
+	// Get picking player name
+	var pickingPlayer;
+	if (this.draft.pickingTeam == 0) {
+		pickingPlayer = this.radiantCaptain;
+	}
+	else {
+		pickingPlayer = this.direCaptain;
+	}
+
+	// Check that current user is the picking captain
+	if (user != pickingPlayer) {
+		return callback({
+			error: true,
+			message: "It's not your turn to pick."
+		});
+	}
+
+	// Check that picked player is in the game
+	var playerFound = false;
+	for (var i in this.players) {
+		if (this.players[i].name.toLowerCase() == picked.toLowerCase()) {
+			playerFound = true;
+		}
+	}
+	if (!playerFound) {
+		return callback({
+			error: true,
+			message: "Could not find player " + picked
+		});
+	}
+
+	// Check that player is not already picked
+	playerFound = false;
+	var player = null;
+	for (var i in this.draft.players) {
+		if (this.draft.players[i].toLowerCase() == picked.toLowerCase()) {
+			playerFound = true;
+			player = this.draft.players[i];
+		}
+	}
+	if (!playerFound) {
+		return callback({
+			error: true,
+			message: "Player was already picked"
+		});
+	}
+
+	// Add player to current team
+	if (this.draft.pickingTeam == 0) {
+		this.radiantPlayers.push(player);
+	}
+	else {
+		this.direPlayers.push(player);
+	}
+
+	// Remove player from available players
+	this.draft.players.splice(this.draft.players.indexOf(player), 1);
+
+	// Check if draft is done
+	if (this.draft.players.length == 0) {
+		this.gamestate = this.Gamestate.ready;
+	}
+
+	// Change picking team
+	this.draft.pickingTeam = (this.draft.pickingTeam + 1) % 2;
+	if (this.draft.pickingTeam == 0) {
+		this.draft.pickingCaptain = this.radiantCaptain;
+	}
+	else {
+		this.draft.pickingCaptain = this.direCaptain;
+	}
+
+	// Done
+	callback({
+		error: null
 	});
 }
 
@@ -263,18 +445,11 @@ Game.prototype.cancel = function(callback) {
 
 Game.prototype.go = function(user, callback) {
 	// Check game state
-	if (this.gamestate != this.Gamestate.signup) {
+	if (this.gamestate != this.Gamestate.shuffle
+	&& this.gamestate != this.Gamestate.ready) {
 		return callback({
 			error: true,
 			message: "Invalid gamestate"
-		});
-	}
-
-	// Check players
-	if (this.players.length != 10) {
-		return callback({
-			error: true,
-			message: "Game is not full"
 		});
 	}
 
@@ -293,14 +468,8 @@ Game.prototype.go = function(user, callback) {
 		});
 	}
 
-	// If this is draft, start drafting
-	if (this.gamemode == this.Gamemode.drafting) {
-		this.gamestate = this.Gamestate.live;
-	}
-	else {
-		// Shuffle -> game is live
-		this.gamestate = this.Gamestate.live;
-	}
+	// Change gamestate to live
+	this.gamestate = this.Gamestate.live;
 
 	// Done
 	callback({
@@ -331,26 +500,10 @@ Game.prototype.start = function(callback) {
 
 Game.prototype.shuffle = function(callback) {
 	// Check game state
-	if (this.gamestate != this.Gamestate.signup) {
+	if (this.gamestate != this.Gamestate.shuffle) {
 		return callback({
 			error: true,
 			message: "Invalid gamestate"
-		});
-	}
-
-	// Check players
-	if (this.players.length != 10) {
-		return callback({
-			error: true,
-			message: "Not enough players"
-		});
-	}
-
-	// Check gamemode
-	if (this.gamemode != this.Gamemode.shuffle) {
-		return callback({
-			error: true,
-			message: "Invalid gamemode"
 		});
 	}
 
@@ -407,13 +560,29 @@ Game.prototype.end = function(winner, callback) {
 	this.players = [];
 
 	// Clear teams
-	this.radiantPlayers = [];
-	this.direPlayers = [];
+	this.clearTeams();
 
 	// Done
 	callback({
 		error: null,
 		winner: winner
+	});
+}
+
+Game.prototype.teams = function(callback) {
+	// Check game state
+	if ([this.Gamestate.draft, this.Gamestate.live, this.Gamestate.shuffle].indexOf(this.gamestate) == -1) {
+		return callback({
+			error: true,
+			message: "No teams selected yet"
+		});
+	}
+
+	// Return teams
+	callback({
+		error: null,
+		radiantPlayers: this.radiantPlayers.join(', '),
+		direPlayers: this.direPlayers.join(', ')
 	});
 }
 

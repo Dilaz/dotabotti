@@ -62,6 +62,7 @@ function Bot(config) {
 			.replace('_PREFIX_', this.config.commandPrefix);
 	}
 
+
 	//
 	// COMMANDS
 	//
@@ -110,9 +111,15 @@ function Bot(config) {
 				}
 				else {
 					self.client.say(data.to, data.from + ' signed. ' + resp.players.toString() + '/10');
-					if (resp.players == 10 && self.game.gamemode == self.game.Gamemode.shuffle) {
-						self.client.say(data.to, "Game is full. You can start with " + self.config.commandPrefix + "go or shuffle teams again with " + self.config.commandPrefix + 'shuffle');
-						self.emit('command:shuffle', data);
+					if (resp.players == 10) {
+						if (self.game.gamemode == self.game.Gamestate.shuffle) {
+							self.client.say(data.to, "Game is full. You can start with " + self.config.commandPrefix + "go or shuffle teams again with " + self.config.commandPrefix + 'shuffle');
+							self.emit('command:shuffle', data);
+						}
+						else {
+							self.client.say(data.to, 'Game is full. Draft starts. ' + self.game.Teams[self.game.draft.pickingTeam] + '\'s turn to pick. Captain: ' + self.game.draft.pickingCaptain);
+							self.client.say(data.to, 'Available players: ' + self.game.draft.players.join(', '));
+						}
 					}
 				}
 			}
@@ -126,7 +133,7 @@ function Bot(config) {
 				self.client.say(data.to, 'Error: ' + resp.message);
 			}
 			else {
-				self.client.say(data.to, data.from + ' removed. ' + resp.players.toString() + '/10');
+				self.client.say(data.to, data.from + ' removed. (' + resp.players.toString() + '/10)');
 
 				// Check if game was canceled
 				if (resp.cancelGame) {
@@ -137,6 +144,14 @@ function Bot(config) {
 				else if (resp.players == 0) {
 					self.client.say(data.to, 'No players signed. Canceling the game..');
 					self.emit('command:cancel', data);
+				}
+				else if (resp.returnToSignup) {
+					if (self.game.gamemode == self.game.Gamestate.shuffle) {
+						self.client.say(data.to, 'Game was full and a player left. Returning to signup');
+					}
+					else {
+						self.client.say(data.to, 'Draft canceled. Returning to signup');
+					}
 				}
 			}
 		});
@@ -188,7 +203,7 @@ function Bot(config) {
 				self.client.say(data.to, 'Error: ' + resp.message);
 			}
 			else {
-				self.client.say(data.to, 'Starting a new game (draft mode). Captains are ' + resp.radiantCaptain + ' and ' + resp.direCaptain + '.');
+				self.client.say(data.to, 'Starting a new game (draft mode). Captains are ' + resp.radiantCaptain + ' and ' + resp.direCaptain);
 			}
 		});
 	});
@@ -200,14 +215,21 @@ function Bot(config) {
 				self.client.say(data.to, 'Error: ' + resp.message);
 			}
 			else {
-				self.client.say(data.to, data.from + ' challenged. Type ' + self.config.commandPrefix + 'accept to accept challenge.');
+				self.client.say(data.to, data.from + ' challenged. Type ' + self.config.commandPrefix + 'accept to accept challenge');
 			}
 		});
 	});
 
 	// Teams
 	self.on('command:teams', function(data) {
-
+		self.game.teams(function(resp) {
+			if (resp.error) {
+				self.client.say(data.to, 'Error: ' + resp.message);
+			}
+			else {
+				self.client.say(data.to, "[Radiant]: " + resp.radiantPlayers + " [Dire]: " + resp.direPlayers);
+			}
+		});
 	});
 
 	// Game
@@ -217,7 +239,14 @@ function Bot(config) {
 
 	// Sides
 	self.on('command:sides', function(data) {
-
+		self.game.sides(data.args[0], function(resp) {
+			if (resp.error) {
+				self.client.say(data.to, 'Error: ' + resp.message);
+			}
+			else {
+				self.client.say(data.to, "[Radiant]: " + resp.radiantPlayers + " [Dire]: " + resp.direPlayers);
+			}
+		});
 	});
 
 	// Go
@@ -227,7 +256,7 @@ function Bot(config) {
 				self.client.say(data.to, 'Error: ' + resp.message);
 			}
 			else {
-				self.client.say(data.to, 'GAME ON. GL HF BIG PLAYS.');
+				self.client.say(data.to, 'GAME ON. GL HF BIG PLAYS!!1');
 			}
 		});
 	});
@@ -239,7 +268,7 @@ function Bot(config) {
 				self.client.say(data.to, 'Error: ' + resp.message);
 			}
 			else {
-				self.client.say(data.to, 'Radiant: ' + resp.radiantPlayers + ' Dire: ' + resp.direPlayers);
+				self.client.say(data.to, '[Radiant]: ' + resp.radiantPlayers + ' [Dire]: ' + resp.direPlayers);
 			}
 		});
 	});
@@ -251,7 +280,16 @@ function Bot(config) {
 				self.client.say(data.to, 'Error: ' + resp.message);
 			}
 			else {
-				self.client.say(data.to, 'Radiant: ' + resp.radiantPlayers + ' Dire: ' + resp.direPlayers);
+				self.client.say(data.to, '[Radiant]: ' + self.game.radiantPlayers.join(', ') + ' [Dire]: ' + self.game.direPlayers.join(', '));
+
+				// Check if draft is done
+				if (self.game.draft.players.length == 0) {
+					self.client.say(data.to, 'Draft is done. You can start the game with ' + self.config.commandPrefix + 'go');
+				}
+				else {
+					self.client.say(data.to, self.game.Teams[self.game.draft.pickingTeam] + '\'s turn to pick. Captain: ' + self.game.draft.pickingCaptain);
+					self.client.say(data.to, 'Available players: ' + self.game.draft.players.join(', '));
+				}
 			}
 		});
 	});
