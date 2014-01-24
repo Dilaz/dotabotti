@@ -1,0 +1,33 @@
+{
+  "name": "Dotabotti",
+  "version": "0.0.1",
+  "description": "Simple Dota drafting bot for IRC",
+  "main": "dotabotti.js",
+  "dependencies": {
+    "events": "~1.0.0",
+    "irc": "~0.3.6",
+    "mongodb": "~1.3.23",
+    "monk": "~0.7.1",
+    "util": "~0.10.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Dilaz/dotabotti.git"
+  },
+  "keywords": [
+    "bot",
+    "irc",
+    "draft",
+    "dota2"
+  ],
+  "author": "Dilaz",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Dilaz/dotabotti/issues"
+  },
+  "homepage": "https://github.com/Dilaz/dotabotti"
+}
