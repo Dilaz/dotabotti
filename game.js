@@ -339,7 +339,7 @@ Game.prototype.pick = function(user, picked, callback) {
 	if (user != pickingPlayer) {
 		return callback({
 			error: true,
-			message: "It's not your turn to pick."
+			message: "It's not your turn to pick"
 		});
 	}
 
