@@ -18,7 +18,7 @@ function Bot(config) {
 
 	this.config = config;
 	var self = this;
-	this.game = new Game(this.config);
+	this.game = new Game();
 
 	// Init IRC-client
 	this.client = new irc.Client(config.server, config.nick, {
@@ -105,8 +105,6 @@ function Bot(config) {
 			}
 		}
 	});
-
-	this.removePlayers
 
 	// Add command name and prefix to command help
 	for (var command in commands) {
