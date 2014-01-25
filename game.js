@@ -2,7 +2,7 @@
 var User = require('./user.js');
 
 // Game object
-function Game(config) {
+function Game() {
 	// Gamestate enum
 	this.Gamestate = {
 		challenged : 0,
@@ -36,7 +36,6 @@ function Game(config) {
 	
 
 	// Variables
-	this.config = config;
 	this.gamestate = this.Gamestate.ended;
 	this.gamemode = this.Gamemode.draft;
 	this.players = [];
