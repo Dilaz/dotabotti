@@ -33,6 +33,14 @@ function Bot(config) {
     	console.log('error: ', message);
 	});
 
+	this.client.addListener('raw', function(message) {
+		// Nick in use
+		if (message.command == '437') {
+			// Change nick to altNick
+			self.client.send('NICK', self.config.altNick);
+		}
+	});
+
 	// Add listener for messages
 	this.client.addListener('message', function(from, to, text, message) {
 		// Make sure this is on a channel
@@ -164,7 +172,7 @@ function Bot(config) {
 					self.client.say(data.to, data.from + ' signed. (' + resp.players.toString() + '/10)');
 					if (resp.players == 10) {
 						if (self.game.gamemode == self.game.Gamestate.shuffle) {
-							self.client.say(data.to, "Game is full. You can start with " + self.config.commandPrefix + "go or shuffle teams again with " + self.config.commandPrefix + 'shuffle');
+							self.client.say(data.to, "Game is full. You can start with " + self.config.commandPrefix + "go or shuffle teams again with " + self.config.commandPrefix + 'shuffle.');
 							self.emit('command:shuffle', data);
 						}
 						else {
@@ -285,7 +293,7 @@ function Bot(config) {
 
 	// Game
 	self.on('command:game', function(data) {
-
+		self.client.say(data.to, 'Mitä odotit et tästä tapahtuu? :|');
 	});
 
 	// Sides
