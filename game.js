@@ -656,5 +656,43 @@ Game.prototype.teams = function(callback) {
 	});
 }
 
+/**
+ * Swaps teams around or if command is "random", randomes the sides
+ * @param  {String}   command  If command is "random", sides are randomed
+ * @param  {Function} callback Callback function
+ */
+Game.prototype.sides = function(command, callback) {
+	// Check game state
+	if ([this.Gamestate.ready, this.Gamestate.shuffle].indexOf(this.gamestate) == -1) {
+		return callback({
+			error: true,
+			message: "Invalid gamestate"
+		});
+	}
+
+	// Check command
+	var swapTeams = true;
+	if (command && command == "random") {
+		swapTeams = (Math.round(Math.random()) == 1);
+	}
+
+	// If teams are not swapped, return here
+	if (!swapTeams) {
+		return callback({
+			error: null
+		});
+	}
+
+	// Swap teams
+	var tmpArray = this.radiantPlayers;
+	this.radiantPlayers = this.direPlayers;
+	this.direPlayers = tmpArray;
+
+	// Swap captains
+	var tmpCaptain = this.radiantCaptain;
+	this.radiantCaptain = this.direCaptain;
+	this.direCaptain = tmpCaptain;
+}
+
 // Export Game-object as module
 module.exports = Game;
