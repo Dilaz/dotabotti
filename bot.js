@@ -363,5 +363,16 @@ function Bot(config) {
 // Bot inherits event emitter
 util.inherits(Bot, events.EventEmitter);
 
+/**
+ * Reloads bot's configs
+ * @param  {Object} config New configs
+ */
+Bot.prototype.reloadConfigs = function(config) {
+	console.log('New configs:');
+	console.log(config);
+	this.config = config;
+}
+
+
 // Export Bot as module
 module.exports = Bot;
