@@ -20,6 +20,29 @@ function Bot(config) {
 	var self = this;
 	this.game = new Game();
 
+	this.activityTimer = null;
+	this.gameChannel = null;
+
+	// Function to set the game cancel -timer
+	self.resetTimer = function() {
+		if (self.activityTimer) {
+			clearTimeout(self.activityTimer);
+		}
+
+		self.activityTimer = setTimeout(function() {
+			self.client.say(self.gameChannel, 'Game will be canceled in 1 minute. You can reset the timer by ' + self.config.commandPrefix + 'sign or ' + self.config.commandPrefix + 'reset');
+			self.activityTimer = setTimeout(function() {
+				self.emit('command:cancel', {to: self.gameChannel});
+			}, 60000);
+		}, self.config.gameCancelTimer * 60000);
+	}
+	self.endTimer = function() {
+		if (self.activityTimer) {
+			clearTimeout(self.activityTimer);
+			self.activityTimer = null;
+		}
+	}
+
 	// Init IRC-client
 	this.client = new irc.Client(config.server, config.nick, {
 		channels: config.channels,
@@ -66,46 +89,46 @@ function Bot(config) {
 	// Add listener for nick change
 	this.client.addListener('nick', function(oldnick, newnick, channels, message) {
 		// Check if current game has player with that name
-		for (var i in this.game.players) {
-			if (this.game.players[i].name == oldnick) {
+		for (var i in self.game.players) {
+			if (self.game.players[i].name == oldnick) {
 				// Change the name
-				this.game.players[i].name = newnick;
+				self.game.players[i].name = newnick;
 
 				// Check draft pool
-				for (var j in this.game.draft.players) {
-					if (this.game.draft.players[j] == oldnick) {
-						this.game.draft.players[j] = newnick;
+				for (var j in self.game.draft.players) {
+					if (self.game.draft.players[j] == oldnick) {
+						self.game.draft.players[j] = newnick;
 						break;
 					}
 				}
 
 				// Check radiant team 
-				for (var j in this.game.radiantPlayers) {
-					if (this.game.radiantPlayers[j] == oldnick) {
-						this.game.radiantPlayers[j] = newnick;
+				for (var j in self.game.radiantPlayers) {
+					if (self.game.radiantPlayers[j] == oldnick) {
+						self.game.radiantPlayers[j] = newnick;
 						break;
 					}
 				}
 
 				// Check dire team 
-				for (var j in this.game.direPlayers) {
-					if (this.game.direPlayers[j] == oldnick) {
-						this.game.direPlayers[j] = newnick;
+				for (var j in self.game.direPlayers) {
+					if (self.game.direPlayers[j] == oldnick) {
+						self.game.direPlayers[j] = newnick;
 						break;
 					}
 				}
 
 				// Check captains
-				if (this.game.radiantCaptain == oldnick) {
-					this.game.radiantCaptain = newnick;
+				if (self.game.radiantCaptain == oldnick) {
+					self.game.radiantCaptain = newnick;
 				}
-				else if (this.game.direCaptaina == oldnick) {
-					this.game.direCaptain = newnick;
+				else if (self.game.direCaptaina == oldnick) {
+					self.game.direCaptain = newnick;
 				}
 
 				// Also check picking captain
-				if (this.game.draft.pickingCaptain == oldnick) {
-					this.game.draft.pickingCaptain = newnick;
+				if (self.game.draft.pickingCaptain == oldnick) {
+					self.game.draft.pickingCaptain = newnick;
 				}
 
 				// Done
@@ -159,6 +182,8 @@ function Bot(config) {
 
 	// Sign
 	self.on('command:sign', function(data) {
+		self.resetTimer();
+
 		self.game.addPlayer(data.from, function(resp) {
 			if (resp.error) {
 				self.client.say(data.to, 'Error: ' + resp.message);
@@ -171,7 +196,7 @@ function Bot(config) {
 				else {
 					self.client.say(data.to, data.from + ' signed. (' + resp.players.toString() + '/10)');
 					if (resp.players == 10) {
-						if (self.game.gamemode == self.game.Gamestate.shuffle) {
+						if (self.game.gamemode == self.game.Gamemode.shuffle) {
 							self.client.say(data.to, "Game is full. You can start with " + self.config.commandPrefix + "go or shuffle teams again with " + self.config.commandPrefix + 'shuffle.');
 							self.emit('command:shuffle', data);
 						}
@@ -205,7 +230,7 @@ function Bot(config) {
 					self.emit('command:cancel', data);
 				}
 				else if (resp.returnToSignup) {
-					if (self.game.gamemode == self.game.Gamestate.shuffle) {
+					if (self.game.gamemode == self.game.Gamemode.shuffle) {
 						self.client.say(data.to, 'Game was full and a player left. Returning to signup');
 					}
 					else {
@@ -218,6 +243,7 @@ function Bot(config) {
 
 	// Signed
 	self.on('command:signed', function(data) {
+			return self.client.say(data.to, 'hv.');
 		self.game.getPlayers(function(resp) {
 			if (resp.error) {
 				self.client.say(data.to, 'Error: ' + resp.message);
@@ -230,6 +256,7 @@ function Bot(config) {
 
 	// Cancel
 	self.on('command:cancel', function(data) {
+		self.endTimer();
 		self.game.cancel(function(resp) {
 			if (resp.error) {
 				self.client.say(data.to, 'Error: ' + resp.message);
@@ -242,6 +269,8 @@ function Bot(config) {
 
 	// Start
 	self.on('command:start', function(data) {
+		self.resetTimer();
+		self.gameChannel = data.to;
 		self.game.start(function(resp) {
 			if (resp.error) {
 				self.client.say(data.to, 'Error: ' + resp.message);
@@ -257,6 +286,7 @@ function Bot(config) {
 
 	// Accept
 	self.on('command:accept', function(data) {
+		self.resetTimer();
 		self.game.accept(data.from, function(resp) {
 			if (resp.error) {
 				self.client.say(data.to, 'Error: ' + resp.message);
@@ -269,6 +299,8 @@ function Bot(config) {
 
 	// Challenge
 	self.on('command:challenge', function(data) {
+		self.resetTimer();
+		self.gameChannel = data.to;
 		self.game.challenge(data.from, function(resp) {
 			if (resp.error) {
 				self.client.say(data.to, 'Error: ' + resp.message);
@@ -298,6 +330,7 @@ function Bot(config) {
 
 	// Sides
 	self.on('command:sides', function(data) {
+		self.resetTimer();
 		self.game.sides(data.args[0], function(resp) {
 			if (resp.error) {
 				self.client.say(data.to, 'Error: ' + resp.message);
@@ -310,6 +343,7 @@ function Bot(config) {
 
 	// Go
 	self.on('command:go', function(data) {
+		self.endTimer();
 		self.game.go(data.from, function(resp) {
 			if (resp.error) {
 				self.client.say(data.to, 'Error: ' + resp.message);
@@ -322,6 +356,7 @@ function Bot(config) {
 
 	// Shuffle
 	self.on('command:shuffle', function(data) {
+		self.resetTimer();
 		self.game.shuffle(function(resp) {
 			if (resp.error) {
 				self.client.say(data.to, 'Error: ' + resp.message);
@@ -334,6 +369,7 @@ function Bot(config) {
 
 	// Pick
 	self.on('command:pick', function(data) {
+		self.resetTimer();
 		self.game.pick(data.from, data.args[0], function(resp) {
 			if (resp.error) {
 				self.client.say(data.to, 'Error: ' + resp.message);
@@ -355,6 +391,7 @@ function Bot(config) {
 
 	// End
 	self.on('command:end', function(data) {
+		self.endTimer();
 		self.game.end(data.args[0], function(resp) {
 			if (resp.error) {
 				self.client.say(data.to, 'Error: ' + resp.message);
@@ -363,6 +400,41 @@ function Bot(config) {
 				self.client.say(data.to, 'Game ended. Winner is ' + resp.winner + '!');
 			}
 		});
+	});
+
+	// Status
+	self.on('command:status', function(data) {
+		var gamestate = null;
+		var gamemode = null;
+
+		// Get gamestate
+		for (var key in self.game.Gamestate) {
+			if (self.game.Gamestate[key] == self.game.gamestate) {
+				gamestate = key;
+				break;
+			}
+		}
+
+		// Get gamemode
+		for (var key in self.game.Gamemode) {
+			if (self.game.Gamemode[key] == self.game.gamemode) {
+				gamemode = key;
+				break;
+			}
+		}
+		
+		self.client.say(data.to, 'Gamestate: ' + gamestate + ', Gamemode: ' + gamemode + ', Players signed: ' + self.game.players.length + '/10');
+	});
+
+	// Reset
+	self.on('command:reset', function(data) {
+		if (self.game.gamestate != self.game.Gamestate.ended) {
+			self.resetTimer();
+			self.client.say(data.to, 'Timer cleared');
+		}
+		else {
+			self.client.say(data.to, 'Error: Invalid gamestate');
+		}
 	});
 };
 

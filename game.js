@@ -613,7 +613,7 @@ Game.prototype.end = function(winner, callback) {
 	}
 
 	// Change gamestate
-	this.gamestate = this.Gamestate.end;
+	this.gamestate = this.Gamestate.ended;
 
 	// Clear captains
 	this.direCaptain = null;
